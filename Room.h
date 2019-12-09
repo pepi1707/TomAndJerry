@@ -44,6 +44,10 @@ class Room{
 
     PathInfo commonPath(node *cur, int idx1, int idx2, char prevSymbol);
 
+    PathInfo dfsMaxPaint(pair<int, int>, std::vector<std::vector<int>>&, char);
+
+    void animate(string);
+
 public:
 
     Room();
@@ -59,6 +63,8 @@ public:
     void printChosenPath(int idx);
 
     void twoDronesMostPaint();
+
+    void maxPaint();
     
 };
 

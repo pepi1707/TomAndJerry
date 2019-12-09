@@ -11,14 +11,16 @@ using namespace std;
 int main(){
 
     Room room;
-    char txt[] = "room.txt";
+    char txt[] = "bigger-room.txt";
     room.read(txt);
     room.buildPathTree();
-    char output[] = "graph.dot";
+    char output[] = "bigGraph.dot";
     room.printPathTree(output);
-    room.printChosenPath(0);
     room.printChosenPath(1);
-    room.printChosenPath(2);
+    room.printChosenPath(12);
+    room.printChosenPath(18);
     room.twoDronesMostPaint();
+    room.maxPaint();
+   
     return 0;    
 }

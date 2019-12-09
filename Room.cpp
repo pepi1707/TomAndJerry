@@ -19,6 +19,7 @@ char Room::symbolFor(pair<int, int> from, pair<int, int> to){
     else{
         return 'N';
     }
+    return 'x';
 }
 
 int Room::isTurn(const char& c1, const char& c2){
@@ -286,6 +287,7 @@ void Room::printPathTree(const char file[]){
 
 void Room::printChosenPath(int idx){
     PathInfo pathInfo = realPrintChosenPath(root, idx, 'T');
+    animate(pathInfo.path);
     cout << "=========\nINFO FOR PATH NUMBER " << idx << ":\n";
     cout << "commands: " << pathInfo.path << endl;
     cout << "length of path: " << pathInfo.pathLen << "\n";
@@ -340,4 +342,190 @@ void Room::twoDronesMostPaint(){
         cout << ans.first.second.path[i];
     }
     cout << endl;
+}
+
+PathInfo Room::dfsMaxPaint(pair<int, int> cur, std::vector<std::vector<int> >& used, char prSymbol){
+    
+    if(cur == jerry){
+        return PathInfo();
+    }
+    PathInfo res;
+    res.painted = - m * n;
+    res.pathLen = - m * n;
+    pair<int, int> nb;
+    
+    nb = cur;
+    nb.first ++;
+    if(isPosOkay(nb) && !used[nb.first][nb.second]){
+        used[nb.first][nb.second] = 1;
+        PathInfo path = dfsMaxPaint(nb, used, symbolFor(cur, nb));
+        used[nb.first][nb.second] = 0;
+        if(path.pathLen >= 0){
+            path.turns += isTurn(prSymbol, symbolFor(cur, nb));
+            path.pathLen++;
+            path.path = symbolFor(cur, nb) + path.path;
+            if(path.painted == res.painted){
+                if(path.turns < res.turns){
+                    res = path;
+                }
+            }
+            if(path.painted > res.painted){
+                res = path;
+            }
+        }
+    }
+
+    nb = cur;
+    nb.first --;
+    if(isPosOkay(nb) && !used[nb.first][nb.second]){
+        used[nb.first][nb.second] = 1;
+        PathInfo path = dfsMaxPaint(nb, used, symbolFor(cur, nb));
+        used[nb.first][nb.second] = 0;
+        if(path.pathLen >= 0){
+            path.turns += isTurn(prSymbol, symbolFor(cur, nb));
+            path.pathLen++;
+            path.path = symbolFor(cur, nb) + path.path;
+            if(path.painted == res.painted){
+                if(path.turns < res.turns){
+                    res = path;
+                }
+            }
+            if(path.painted > res.painted){
+                res = path;
+            }
+        }
+    }
+    
+    nb = cur;
+    nb.second ++;
+    if(isPosOkay(nb) && !used[nb.first][nb.second]){
+        used[nb.first][nb.second] = 1;
+        PathInfo path = dfsMaxPaint(nb, used, symbolFor(cur, nb));
+        used[nb.first][nb.second] = 0;
+        if(path.pathLen >= 0){
+            path.turns += isTurn(prSymbol, symbolFor(cur, nb));
+            path.pathLen++;
+            path.path = symbolFor(cur, nb) + path.path;
+            if(path.painted == res.painted){
+                if(path.turns < res.turns){
+                    res = path;
+                }
+            }
+            if(path.painted > res.painted){
+                res = path;
+            }
+        }
+    }
+    
+    nb = cur;
+    nb.second --;
+    if(isPosOkay(nb) && !used[nb.first][nb.second]){
+        used[nb.first][nb.second] = 1;
+        PathInfo path = dfsMaxPaint(nb, used, symbolFor(cur, nb));
+        used[nb.first][nb.second] = 0;
+        if(path.pathLen >= 0){
+            path.turns += isTurn(prSymbol, symbolFor(cur, nb));
+            path.pathLen++;
+            path.path = symbolFor(cur, nb) + path.path;
+            if(path.painted == res.painted){
+                if(path.turns < res.turns){
+                    res = path;
+                }
+            }
+            if(path.painted > res.painted){
+                res = path;
+            }
+        }
+    }
+    if(canPaint[cur.first][cur.second]){
+        res.path = 'P' + res.path;
+        res.painted ++;
+    }
+    return res;
+    
+}
+
+void Room::maxPaint(){
+    std:vector<std::vector<int> > used;
+    used.assign(m, {});
+    for(int i = 0 ; i < m ; i ++){
+        used[i].assign(n, 0);
+    }
+    used[tom.first][tom.second] = 1;
+    PathInfo p = dfsMaxPaint(tom, used, 'X');
+    cout << "you can paint maximum: " << p.painted << " blocks\n";
+    cout << "with these commands: " << p.path << "\n";
+    cout << "with minimum of " << p.turns << " turns\n";
+}
+
+
+#include <unistd.h>
+#include <term.h>
+
+void ClearScreen()
+{
+    if (!cur_term)
+    {
+        int result;
+        setupterm( NULL, STDOUT_FILENO, &result );
+        if (result <= 0) return;
+    }
+
+    putp( tigetstr( "clear" ) );
+}
+
+
+void Room::animate(string dronePath){
+    pair<int, int> drone = tom;
+    std::vector<std::vector<char> > painted;
+    painted.assign(m, {});
+    for(int i = 0; i < m; i ++){
+        painted[i].assign(n, '.');
+    }
+    for(int x = 0; x < dronePath.size(); x ++){
+        if(dronePath[x] == 'P'){
+            painted[drone.first][drone.second] = 'P';
+        } else if(dronePath[x] == 'S'){
+            if(painted[drone.first][drone.second] != 'P')
+                painted[drone.first][drone.second] = '|';
+            drone.first ++;
+        } else if(dronePath[x] == 'N'){
+            if(painted[drone.first][drone.second] != 'P')
+                painted[drone.first][drone.second] = '|';
+            drone.first --;
+        } else if(dronePath[x] == 'E'){
+            if(painted[drone.first][drone.second] != 'P')
+                painted[drone.first][drone.second] = '-';
+            drone.second ++;
+        } else if(dronePath[x] == 'W'){
+            if(painted[drone.first][drone.second] != 'P')
+                painted[drone.first][drone.second] = '-';
+            drone.second --;
+        }
+        ClearScreen();
+        for(int i = 0; i < m; i ++){
+            for(int j = 0; j < n; j ++){
+                pair<int, int> cur({i, j});
+                if(cur == drone){
+                    cout << '*';
+                    continue;
+                }
+                if(cur == tom){
+                    cout << 'T';
+                    continue;
+                }
+                if(cur == jerry){
+                    cout << 'J';
+                    continue;
+                }
+                if(blocked[i][j]){
+                    cout << 'B';
+                    continue;
+                }
+                cout << painted[i][j];
+            }
+            cout << endl;
+        }
+        usleep(1000000);
+    }
 }
