@@ -1,36 +1,12 @@
 #include "Room.h"
 
-bool Room::isPosOkay(pair<int, int> pos){
+bool Room::isPosOkay(const pair<int, int>& pos){
     return pos.first >= 0 && pos.first < m && pos.second >=0 && pos.second < n && !blocked[pos.first][pos.second];
 }
 
-char Room::symbolFor(pair<int, int> from, pair<int, int> to){
-    if(from.first == to.first){
-        if(from.second < to.second){
-            return 'E';
-        }
-        else{
-            return 'W';
-        }
-    }
-    if(from.first < to.first){
-        return 'S';
-    }
-    else{
-        return 'N';
-    }
-    return 'x';
-}
-
-int Room::isTurn(const char& c1, const char& c2){
-    return ((c1 == 'N' || c1 == 'S') && (c2 == 'E' || c2 == 'W')) ||
-            ((c1 == 'E' || c1 == 'W') && (c2 == 'N' || c2 == 'S'));
-}
-
 void Room::initRoomNodes(){
-    roomNodes = new node**[m];
+    roomNodes.build(m, n);
     for(int i = 0; i < m; i ++){
-        roomNodes[i] = new node*[n];
         for(int j = 0; j < n; j ++){
             roomNodes[i][j] = new node('X', {i, j});
         }
@@ -42,201 +18,56 @@ void Room::clearRoomNodes(){
         for(int j = 0; j < n; j ++){
             delete roomNodes[i][j];
         }
-        delete[] roomNodes[i];
     }
-    delete[] roomNodes;
 }
 
-void Room::clearPathNodes(node* cur){
-    for(int i = 0; i < cur->next.size(); i++){
-        clearPathNodes(cur->next[i]);
-    }
-    delete cur;
-}
 
 void Room::makeRoomEdges(){
-    initRoomNodes();
-    int **used = new int*[m];
-    for(int i = 0; i < m; i ++){
-        used[i] = new int[n];
-        for(int j = 0; j < n; j ++){
-            used[i][j] = -1;
-        }
-    }
+    Matrix<int> used(m, n, -1);
     queue<node* > q;
-    q.push(roomNodes[jerry.first][jerry.second]);
-    used[jerry.first][jerry.second] = 1;
+    q.push(roomNodes[jerry]);
+    used[jerry] = 1;
     while(!q.empty()){
         
         node* w = q.front(); q.pop();
+        if(canPaint[w->pos]){
+            w->symbol = 'P';
+        }
 
-        pair<int, int> nb_pos = w->pos;
-        
-        nb_pos.first ++;
-        if(isPosOkay(nb_pos)){
-            node* nb = roomNodes[nb_pos.first][nb_pos.second];
-            if(used[nb_pos.first][nb_pos.second] == used[w->pos.first][w->pos.second] - 1){
-                w->addNext(nb);
-            }
-            else if(used[nb_pos.first][nb_pos.second] == -1){
-                used[nb_pos.first][nb_pos.second] = used[w->pos.first][w->pos.second] + 1;
-                q.push(nb);
+        for(int i = 0; i < adjacentPosition.size(); i ++){
+            pair<int, int> nb_pos = {w->pos.first + adjacentPosition[i].first, w->pos.second + adjacentPosition[i].second};
+            if(isPosOkay(nb_pos)){
+                node* nb = roomNodes[nb_pos];
+                if(used[nb_pos] == used[w->pos] - 1){
+                    w->addNext(nb);
+                }
+                else if(used[nb_pos] == -1){
+                    used[nb_pos] = used[w->pos] + 1;
+                    q.push(nb);
+                }
             }
         }
 
-        nb_pos = w->pos;
-        nb_pos.first --;
-        if(isPosOkay(nb_pos)){
-            node* nb = roomNodes[nb_pos.first][nb_pos.second];
-            if(used[nb_pos.first][nb_pos.second] == used[w->pos.first][w->pos.second] - 1){
-                w->addNext(nb);
-            }
-            else if(used[nb_pos.first][nb_pos.second] == -1){
-                used[nb_pos.first][nb_pos.second] = used[w->pos.first][w->pos.second] + 1;
-                q.push(nb);
-            }
-        }
-
-        nb_pos = w->pos;
-        nb_pos.second ++;
-        if(isPosOkay(nb_pos)){
-            node* nb = roomNodes[nb_pos.first][nb_pos.second];
-            if(used[nb_pos.first][nb_pos.second] == used[w->pos.first][w->pos.second] - 1){
-                w->addNext(nb);
-            }
-            else if(used[nb_pos.first][nb_pos.second] == -1){
-                used[nb_pos.first][nb_pos.second] = used[w->pos.first][w->pos.second] + 1;
-                q.push(nb);
-            }
-        }
-        
-        nb_pos = w->pos;
-        nb_pos.second --;
-        if(isPosOkay(nb_pos)){
-            node* nb = roomNodes[nb_pos.first][nb_pos.second];
-            if(used[nb_pos.first][nb_pos.second] == used[w->pos.first][w->pos.second] - 1){
-                w->addNext(nb);
-            }
-            else if(used[nb_pos.first][nb_pos.second] == -1){
-                used[nb_pos.first][nb_pos.second] = used[w->pos.first][w->pos.second] + 1;
-                q.push(nb);
-            }
-        }
     }
 
-}
-
-void Room::dfsBuildPathTree(node* curPath, node* curPoint){
-    if(canPaint[curPath->pos.first][curPath->pos.second] && curPath->symbol != 'P'){
-        node* toPaint = new node('P', curPath->pos);
-        curPath->addNext(toPaint);
-        dfsBuildPathTree(toPaint, curPoint);
-        curPath->cntLeaves = toPaint->cntLeaves;
-        return;
-    }
-    if(curPoint->pos == jerry){
-        curPath->cntLeaves = 1;
-        return;
-    }
-    for(int i = 0; i < curPoint->next.size(); i ++){
-        node* nbPoint = curPoint->next[i];
-        node* newPath = new node(symbolFor(curPath->pos, nbPoint->pos), nbPoint->pos);
-        curPath->addNext(newPath);
-        dfsBuildPathTree(newPath, nbPoint);
-        curPath->cntLeaves += newPath->cntLeaves;
-    }   
-}
-
-void Room::dfsPrintPathTree(const node* cur, ofstream& out, int idx){
-    out << "\t" << (long)cur << "[label=\"" << cur->symbol;
-    if(cur->next.size() == 0){
-        out << ", idx: " << idx; 
-    }
-    out << "\"];\n";
-    for(int i = 0; i < cur->next.size(); i ++){
-        node *nb = cur->next[i];
-        out << "\t" << (long)cur << " -> " << (long)nb << ";\n";
-        if(i != 0)
-            dfsPrintPathTree(nb, out, idx + cur->next[i-1]->cntLeaves);
-        else
-            dfsPrintPathTree(nb, out, idx);
-    }
-}
-
-PathInfo Room::realPrintChosenPath(node *cur, int idx, char prevSymbol){
-    
-    for(int i = 0; i < cur->next.size(); i ++){
-        if(idx >= cur->next[i]->cntLeaves){
-            idx -= cur->next[i]->cntLeaves;
-            continue;
-        }
-        node* nb = cur->next[i];
-        PathInfo curPath, restPath = realPrintChosenPath(nb, idx, nb->symbol == 'P' ? cur->symbol : nb->symbol);
-        curPath.path = nb->symbol + restPath.path;
-        curPath.turns = isTurn(prevSymbol, nb->symbol) + restPath.turns;
-        curPath.pathLen = (nb->symbol != 'P') + restPath.pathLen;
-        curPath.painted = (nb->symbol == 'P') + restPath.painted;
-
-        return curPath;
-    }
-    return PathInfo();
-}
-
-PathInfo Room::commonPath(node *cur, int idx1, int idx2, char prevSymbol){
-
-    for(int i = 0; i < cur->next.size(); i ++){
-        if(idx2 >= cur->next[i]->cntLeaves){
-            idx1 -= cur->next[i]->cntLeaves;
-            idx2 -= cur->next[i]->cntLeaves;
-            continue;
-        }
-        if(idx1 < 0){
-            return PathInfo();
-        }
-        node* nb = cur->next[i];
-        PathInfo curPath, restPath = commonPath(nb, idx1, idx2, nb->symbol == 'P' ? cur->symbol : nb->symbol);
-        curPath.path = nb->symbol + restPath.path;
-        curPath.turns = isTurn(prevSymbol, nb->symbol) + restPath.turns;
-        curPath.pathLen = (nb->symbol != 'P') + restPath.pathLen;
-        curPath.painted = (nb->symbol == 'P') + restPath.painted;
-
-        return curPath;
-    }
-    return PathInfo();
 }  
 
 Room::Room(){
-    blocked = nullptr;
-    canPaint = nullptr;
+    
 }
 
 Room::~Room(){
-    for(int i = 0; i < m; i ++){
-        delete[] blocked[i];
-        delete[] canPaint[i];
-    }
-    delete[] blocked;
-    delete[] canPaint;
     clearRoomNodes();
-    clearPathNodes(root);
 }
 
-void Room::read(char file[256]){
+void Room::read(const char file[256]){
     
     ifstream in(file);
 
     in >> m >> n;
 
-    blocked = new bool*[m];
-    canPaint = new bool*[m];
-
-    for(int i = 0; i < m; i ++){
-        blocked[i] = new bool[n];
-        canPaint[i] = new bool[n];
-        for(int j = 0; j < n; j++){
-            blocked[i][j] = canPaint[i][j] = false;
-        }
-    }        
+    blocked.build(m, n, 0);
+    canPaint.build(m, n, 0);      
 
     in >> jerry.first >> jerry.second;
     in >> tom.first >> tom.second;
@@ -272,79 +103,72 @@ void Room::read(char file[256]){
 }
 
 void Room::buildPathTree(){
+    initRoomNodes();
     makeRoomEdges();
-    root = new node('T', tom);
-    dfsBuildPathTree(root, roomNodes[tom.first][tom.second]);
+    pathsTree.build(roomNodes[tom], jerry);
 }
 
-void Room::printPathTree(const char file[]){
+void Room::printPathTree(const char file[]) const{
     ofstream out(file);
     out << "digraph {\n";
-    dfsPrintPathTree(root, out, 0);
+    pathsTree.print(out, 0);
     out << "}";
     out.close();
 }
 
 void Room::printChosenPath(int idx){
-    PathInfo pathInfo = realPrintChosenPath(root, idx, 'T');
+    PathInfo pathInfo = pathsTree.findChosenPath(idx, 'T');
     animate(pathInfo.path);
-    cout << "=========\nINFO FOR PATH NUMBER " << idx << ":\n";
-    cout << "commands: " << pathInfo.path << endl;
-    cout << "length of path: " << pathInfo.pathLen << "\n";
-    cout << "painted blocks: " << pathInfo.painted << "\n";
-    cout << "turns: " << pathInfo.turns << "\n";
+    std::cout << "=========\nINFO FOR PATH NUMBER " << idx << ":\n";
+    std::cout << "commands: " << pathInfo.path << "\n";
+    std::cout << "length of path: " << pathInfo.pathLen << "\n";
+    std::cout << "painted blocks: " << pathInfo.painted << "\n";
+    std::cout << "turns: " << pathInfo.turns << "\n";
 }
 
-void Room::twoDronesMostPaint(){
+void Room::twoDronesMostPaint() const{
 
-    int leaves = root->cntLeaves;
+    int leaves = pathsTree.numberOfLeaves();
     int maxPaint = -1;
-    int minTurns = 1e9;
-    pair<pair<PathInfo, PathInfo>, PathInfo> ans;
+    int minTurns = m * n;
+    std::vector<PathInfo> ans(3);
 
     for(int i = 0; i < leaves; i ++){
-        PathInfo path1 = realPrintChosenPath(root, i, 'T');
+        PathInfo path1 = pathsTree.findChosenPath(i, 'T');
         for(int j = i + 1; j < leaves; j ++){
-            PathInfo path2 = realPrintChosenPath(root, j, 'T');
-            PathInfo path3 = commonPath(root, i, j, 'T');
-            cout << path3.path << endl;
+            PathInfo path2 = pathsTree.findChosenPath(j, 'T');
+            PathInfo path3 = pathsTree.commonPath(i, j, 'T');
             int curPaint = path1.painted + path2.painted - path3.painted;
             int curTurns = path1.turns + path2.turns;
-            if(curPaint == maxPaint){
-                if(curTurns < minTurns){
-                    minTurns = curTurns;
-                    ans = {{path1, path2}, path3};
-                }
-            }
-            if(curPaint > maxPaint){
+            if((curPaint == maxPaint && curTurns < minTurns) || curPaint > maxPaint){
                 maxPaint = curPaint;
                 minTurns = curTurns;
-                ans = {{path1, path2}, path3};
+                ans = {path1, path2, path3};
             }
 
         }
     }
 
-    cout << "======\nTWO DRONES CAN PAINT MAXIMUM:\n";
-    cout << maxPaint << " blocks\n";
-    cout << "with the minimum of " << minTurns << " turns amongst all\n";
-    cout << "Drone commands:\n";
-    cout << "First drone: " << ans.first.first.path << endl;
-    cout << "Second drone: ";
+    std::cout << "========\nTWO DRONES CAN PAINT MAXIMUM:\n";
+    std::cout << maxPaint << " blocks\n";
+    std::cout << "with the minimum of " << minTurns << " turns amongst all\n";
+    std::cout << "Drone commands:\n";
+    std::cout << "First drone: " << ans[0].path << "\n";
+    std::cout << "Second drone: ";
     int i;
-    for(i = 0; i < ans.second.path.size(); i++){
-        if(ans.first.second.path[i] == 'P'){
+    for(i = 0; i < ans[2].path.size(); i++){
+        if(ans[1].path[i] == 'P'){
             continue;
         }
-        cout << ans.first.second.path[i];
+        std::cout << ans[1].path[i];
     }
-    for(; i < ans.first.second.path.size(); i ++){
-        cout << ans.first.second.path[i];
+    for(; i < ans[1].path.size(); i ++){
+        std::cout << ans[1].path[i];
     }
-    cout << endl;
+    std::cout << "\n";
 }
 
-PathInfo Room::dfsMaxPaint(pair<int, int> cur, std::vector<std::vector<int> >& used, char prSymbol){
+PathInfo Room::dfsMaxPaint(pair<int, int> cur, Matrix<int>& used, char prSymbol){
     
     if(cur == jerry){
         return PathInfo();
@@ -353,91 +177,25 @@ PathInfo Room::dfsMaxPaint(pair<int, int> cur, std::vector<std::vector<int> >& u
     res.painted = - m * n;
     res.pathLen = - m * n;
     pair<int, int> nb;
-    
-    nb = cur;
-    nb.first ++;
-    if(isPosOkay(nb) && !used[nb.first][nb.second]){
-        used[nb.first][nb.second] = 1;
-        PathInfo path = dfsMaxPaint(nb, used, symbolFor(cur, nb));
-        used[nb.first][nb.second] = 0;
-        if(path.pathLen >= 0){
-            path.turns += isTurn(prSymbol, symbolFor(cur, nb));
-            path.pathLen++;
-            path.path = symbolFor(cur, nb) + path.path;
-            if(path.painted == res.painted){
-                if(path.turns < res.turns){
+    for(int i = 0; i < adjacentPosition.size(); i ++){
+        nb.first = cur.first + adjacentPosition[i].first;
+        nb.second = cur.second + adjacentPosition[i].second;
+        if(isPosOkay(nb) && !used[nb]){
+            used[nb] = 1;
+            PathInfo path = dfsMaxPaint(nb, used, symbolFor(cur, nb));
+            used[nb] = 0;
+            if(path.pathLen >= 0){
+                path.turns += isTurn(prSymbol, symbolFor(cur, nb));
+                path.pathLen++;
+                path.path = symbolFor(cur, nb) + path.path;
+                if((path.painted == res.painted && path.turns < res.turns) || path.painted > res.painted){
                     res = path;
                 }
-            }
-            if(path.painted > res.painted){
-                res = path;
             }
         }
     }
 
-    nb = cur;
-    nb.first --;
-    if(isPosOkay(nb) && !used[nb.first][nb.second]){
-        used[nb.first][nb.second] = 1;
-        PathInfo path = dfsMaxPaint(nb, used, symbolFor(cur, nb));
-        used[nb.first][nb.second] = 0;
-        if(path.pathLen >= 0){
-            path.turns += isTurn(prSymbol, symbolFor(cur, nb));
-            path.pathLen++;
-            path.path = symbolFor(cur, nb) + path.path;
-            if(path.painted == res.painted){
-                if(path.turns < res.turns){
-                    res = path;
-                }
-            }
-            if(path.painted > res.painted){
-                res = path;
-            }
-        }
-    }
-    
-    nb = cur;
-    nb.second ++;
-    if(isPosOkay(nb) && !used[nb.first][nb.second]){
-        used[nb.first][nb.second] = 1;
-        PathInfo path = dfsMaxPaint(nb, used, symbolFor(cur, nb));
-        used[nb.first][nb.second] = 0;
-        if(path.pathLen >= 0){
-            path.turns += isTurn(prSymbol, symbolFor(cur, nb));
-            path.pathLen++;
-            path.path = symbolFor(cur, nb) + path.path;
-            if(path.painted == res.painted){
-                if(path.turns < res.turns){
-                    res = path;
-                }
-            }
-            if(path.painted > res.painted){
-                res = path;
-            }
-        }
-    }
-    
-    nb = cur;
-    nb.second --;
-    if(isPosOkay(nb) && !used[nb.first][nb.second]){
-        used[nb.first][nb.second] = 1;
-        PathInfo path = dfsMaxPaint(nb, used, symbolFor(cur, nb));
-        used[nb.first][nb.second] = 0;
-        if(path.pathLen >= 0){
-            path.turns += isTurn(prSymbol, symbolFor(cur, nb));
-            path.pathLen++;
-            path.path = symbolFor(cur, nb) + path.path;
-            if(path.painted == res.painted){
-                if(path.turns < res.turns){
-                    res = path;
-                }
-            }
-            if(path.painted > res.painted){
-                res = path;
-            }
-        }
-    }
-    if(canPaint[cur.first][cur.second]){
+    if(canPaint[cur]){
         res.path = 'P' + res.path;
         res.painted ++;
     }
@@ -446,16 +204,13 @@ PathInfo Room::dfsMaxPaint(pair<int, int> cur, std::vector<std::vector<int> >& u
 }
 
 void Room::maxPaint(){
-    std:vector<std::vector<int> > used;
-    used.assign(m, {});
-    for(int i = 0 ; i < m ; i ++){
-        used[i].assign(n, 0);
-    }
-    used[tom.first][tom.second] = 1;
+    Matrix<int> used(m, n, 0);
+    used[tom] = 1;
     PathInfo p = dfsMaxPaint(tom, used, 'X');
-    cout << "you can paint maximum: " << p.painted << " blocks\n";
-    cout << "with these commands: " << p.path << "\n";
-    cout << "with minimum of " << p.turns << " turns\n";
+    animate(p.path);
+    std::cout << "you can paint maximum: " << p.painted << " blocks\n";
+    std::cout << "with these commands: " << p.path << "\n";
+    std::cout << "with minimum of " << p.turns << " turns\n";
 }
 
 
@@ -477,29 +232,25 @@ void ClearScreen()
 
 void Room::animate(string dronePath){
     pair<int, int> drone = tom;
-    std::vector<std::vector<char> > painted;
-    painted.assign(m, {});
-    for(int i = 0; i < m; i ++){
-        painted[i].assign(n, '.');
-    }
+    Matrix<char> painted(m, n, '.');
     for(int x = 0; x < dronePath.size(); x ++){
         if(dronePath[x] == 'P'){
-            painted[drone.first][drone.second] = 'P';
+            painted[drone] = 'P';
         } else if(dronePath[x] == 'S'){
-            if(painted[drone.first][drone.second] != 'P')
-                painted[drone.first][drone.second] = '|';
+            if(painted[drone] != 'P')
+                painted[drone] = '|';
             drone.first ++;
         } else if(dronePath[x] == 'N'){
-            if(painted[drone.first][drone.second] != 'P')
-                painted[drone.first][drone.second] = '|';
+            if(painted[drone] != 'P')
+                painted[drone] = '|';
             drone.first --;
         } else if(dronePath[x] == 'E'){
-            if(painted[drone.first][drone.second] != 'P')
-                painted[drone.first][drone.second] = '-';
+            if(painted[drone] != 'P')
+                painted[drone] = '-';
             drone.second ++;
         } else if(dronePath[x] == 'W'){
-            if(painted[drone.first][drone.second] != 'P')
-                painted[drone.first][drone.second] = '-';
+            if(painted[drone] != 'P')
+                painted[drone] = '-';
             drone.second --;
         }
         ClearScreen();
@@ -507,25 +258,25 @@ void Room::animate(string dronePath){
             for(int j = 0; j < n; j ++){
                 pair<int, int> cur({i, j});
                 if(cur == drone){
-                    cout << '*';
+                    std::cout << '*';
                     continue;
                 }
                 if(cur == tom){
-                    cout << 'T';
+                    std::cout << 'T';
                     continue;
                 }
                 if(cur == jerry){
-                    cout << 'J';
+                    std::cout << 'J';
                     continue;
                 }
                 if(blocked[i][j]){
-                    cout << 'B';
+                    std::cout << 'B';
                     continue;
                 }
-                cout << painted[i][j];
+                std::cout << painted[i][j];
             }
-            cout << endl;
+            std::cout << "\n";
         }
-        usleep(1000000);
+        usleep(300000);
     }
 }

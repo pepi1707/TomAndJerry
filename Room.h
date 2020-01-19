@@ -3,6 +3,8 @@
 
 #include "node.h"
 #include "PathInfo.h"
+#include "Matrix.h"
+#include "PathsTree.h"
 
 #include <iostream>
 #include <fstream>
@@ -10,41 +12,30 @@
 #include <vector>
 #include <queue>
 
+
 class Room{
 
     int n, m;
     pair<int, int> jerry;
     pair<int, int> tom;
 
-    bool **blocked;
-    bool **canPaint;
-    node ***roomNodes;
+    Matrix<int> blocked;
+    Matrix<int> canPaint;
+    Matrix<node*> roomNodes;
 
-    node *root;
+    std::vector<pair<int, int>> adjacentPosition = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
-    bool isPosOkay(pair<int, int> pos);
+    PathsTree pathsTree;
 
-    char symbolFor(pair<int, int> from, pair<int, int> to);
-
-    int isTurn(const char& c1, const char& c2);
+    bool isPosOkay(const pair<int, int>& pos);
 
     void initRoomNodes();
 
     void clearRoomNodes();
 
-    void clearPathNodes(node* cur);
-
     void makeRoomEdges();
 
-    void dfsBuildPathTree(node* curPath, node* curPoint);
-
-    void dfsPrintPathTree(const node* cur, ofstream& out, int idx);
-
-    PathInfo realPrintChosenPath(node *cur, int idx, char prevSymbol);
-
-    PathInfo commonPath(node *cur, int idx1, int idx2, char prevSymbol);
-
-    PathInfo dfsMaxPaint(pair<int, int>, std::vector<std::vector<int>>&, char);
+    PathInfo dfsMaxPaint(pair<int, int>, Matrix<int>&, char);
 
     void animate(string);
 
@@ -54,15 +45,15 @@ public:
 
     ~Room();
 
-    void read(char file[256]);
+    void read(const char file[256]);
 
     void buildPathTree();
 
-    void printPathTree(const char file[]);
+    void printPathTree(const char file[]) const;
 
     void printChosenPath(int idx);
 
-    void twoDronesMostPaint();
+    void twoDronesMostPaint() const;
 
     void maxPaint();
     
