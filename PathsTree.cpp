@@ -8,7 +8,7 @@ PathsTree::~PathsTree(){
     clearTreeNodes(root);   
 }
 
-void PathsTree::clearTreeNodes(const node* const cur) const{
+void PathsTree::clearTreeNodes(const node* cur) const{
     if(cur == nullptr)
         return;
     for(node* nb : cur->next){
@@ -17,8 +17,9 @@ void PathsTree::clearTreeNodes(const node* const cur) const{
     delete cur;
 }
 
-void PathsTree::dfsBuild(node* const curPathNode, const node* const curRoomNode, const pair<int, int>& jerry) const{
+void PathsTree::dfsBuild(node* curPathNode, const node* curRoomNode, const pair<int, int>& jerry) const{
     if(curRoomNode->symbol == 'P' && curPathNode->symbol != 'P'){
+        //then we should make a paint command but we shouldn't get stuck in an infinite loop and only make one paint node
         node* toPaint = new node('P', curPathNode->pos);
         curPathNode->addNext(toPaint);
         dfsBuild(toPaint, curRoomNode, jerry);
@@ -26,6 +27,7 @@ void PathsTree::dfsBuild(node* const curPathNode, const node* const curRoomNode,
         return;
     }
     if(curRoomNode->pos == jerry){
+        //we have arrived at destiantion
         curPathNode->cntLeaves = 1;
         return;
     }
@@ -37,7 +39,7 @@ void PathsTree::dfsBuild(node* const curPathNode, const node* const curRoomNode,
     } 
 }
 
-void PathsTree::dfsPrint(const node* const cur, ofstream& out, int idx) const{
+void PathsTree::dfsPrint(const node* cur, ofstream& out, int idx) const{
     out << "\t" << (long)cur << "[label=\"" << cur->symbol;
     if(cur->next.size() == 0){
         out << ", idx: " << idx; 
@@ -53,10 +55,12 @@ void PathsTree::dfsPrint(const node* const cur, ofstream& out, int idx) const{
 
 }
 
-PathInfo PathsTree::dfsFindChosenPath(const node* const cur, int idx, const char& prevSymbol) const{
+PathInfo PathsTree::dfsFindChosenPath(const node* cur, int idx, const char& prevSymbol) const{
     
     for(int i = 0; i < cur->next.size(); i ++){
         if(idx >= cur->next[i]->cntLeaves){
+            //then the number of paths in this vertex's subtree is smaller than the index of the path we want
+            //and we should calculate the number of paths we have skipped
             idx -= cur->next[i]->cntLeaves;
             continue;
         }
@@ -69,10 +73,11 @@ PathInfo PathsTree::dfsFindChosenPath(const node* const cur, int idx, const char
 
         return curPath;
     }
+    //then we have arrived at a leave
     return PathInfo();
 }
 
-PathInfo PathsTree::dfsCommonPath(const node* const cur, int idx1, int idx2, const char& prevSymbol) const{
+PathInfo PathsTree::dfsCommonPath(const node* cur, int idx1, int idx2, const char& prevSymbol) const{
 
     for(int i = 0; i < cur->next.size(); i ++){
         if(idx2 >= cur->next[i]->cntLeaves){
@@ -95,7 +100,7 @@ PathInfo PathsTree::dfsCommonPath(const node* const cur, int idx1, int idx2, con
     return PathInfo();
 }
 
-void PathsTree::build(const node* const tom, const pair<int,int>& jerry){
+void PathsTree::build(const node* tom, const pair<int,int>& jerry){
     root = new node('T', tom->pos);
     dfsBuild(root, tom, jerry);
 }

@@ -25,8 +25,20 @@ std::vector<T>& Matrix<T>::operator[](const int& idx){
 }
 
 template <class T>
+const std::vector<T>& Matrix<T>::operator[](const int& idx) const{
+    assert(idx >= 0 && idx < matrix.size());
+    return matrix[idx];
+}
+
+template <class T>
 T& Matrix<T>::operator[](const pair<int, int>& idx){
-    assert(idx.first >= 0 && idx.first < matrix.size() && idx.second >= 0 && idx.second <matrix[idx.first].size());
+    assert(idx.first >= 0 && idx.first < matrix.size() && idx.second >= 0 && idx.second < matrix[idx.first].size());
+    return matrix[idx.first][idx.second];
+}
+
+template <class T>
+const T& Matrix<T>::operator[](const pair<int, int>& idx) const{
+    assert(idx.first >= 0 && idx.first < matrix.size() && idx.second >= 0 && idx.second < matrix[idx.first].size());
     return matrix[idx.first][idx.second];
 }
 

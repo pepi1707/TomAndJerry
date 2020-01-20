@@ -18,7 +18,11 @@ public:
 
     std::vector<T>& operator[](const int& idx);
 
+    const std::vector<T>& operator[](const int& idx) const;
+
     T& operator[](const pair<int, int>& idx);
+
+    const T& operator[](const pair<int, int>& idx) const;
 
     void build(const int& m, const int& n);
 

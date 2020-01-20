@@ -2,7 +2,7 @@
 #include <fstream>
 #include <cstring>
 #include <vector>
-#include <queue>
+#include <queue> 
 
 #include "Room.h"
 
@@ -13,13 +13,16 @@
 /// command for dotty to pdf
 /// dot -Tpdf bigGraph.dot -o bigGraph.pdf
 
+/// most paint answer if too slow
+/// SSESSPSSSWWWPNNNNNNNPNNEEESSEEEESPENNNESPSSSWPSESSSSWWWPNNE
+
 int main(){
 
     Room room;
-    char txt[] = "room.txt";
+    char txt[] = "bigger-room.txt";
     room.read(txt);
     room.buildPathTree();
-    char output[] = "graph.dot";
+    char output[] = "bigGraph.dot";
     room.printPathTree(output);
     room.printChosenPath(1);
     room.printChosenPath(12);

@@ -9,15 +9,15 @@ class PathsTree{
 
     node* root; 
 
-    void clearTreeNodes(const node* const cur) const;
+    void clearTreeNodes(const node* cur) const;
 
-    void dfsBuild(node* const curPathNode, const node* const curRoomNode, const pair<int,int>& jerry) const;
+    void dfsBuild(node* curPathNode, const node* curRoomNode, const pair<int,int>& jerry) const;
 
-    void dfsPrint(const node* const cur, ofstream& out, int idx) const;
+    void dfsPrint(const node* cur, ofstream& out, int idx) const;
 
-    PathInfo dfsFindChosenPath(const node* const cur, int idx, const char& prevSymbol) const;
+    PathInfo dfsFindChosenPath(const node* cur, int idx, const char& prevSymbol) const;
 
-    PathInfo dfsCommonPath(const node* const cur, int idx1, int idx2, const char& prevSymbol) const;
+    PathInfo dfsCommonPath(const node* cur, int idx1, int idx2, const char& prevSymbol) const;
 
 public:
 
@@ -25,7 +25,7 @@ public:
 
     ~PathsTree();
 
-    void build(const node* const tom, const pair<int, int>& jerry);
+    void build(const node* tom, const pair<int, int>& jerry);
 
     void print(ofstream& out, int idx) const;
 

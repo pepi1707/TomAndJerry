@@ -11,6 +11,7 @@
 #include <cstring>
 #include <vector>
 #include <queue>
+#include <cassert>
 
 
 class Room{
@@ -27,7 +28,9 @@ class Room{
 
     PathsTree pathsTree;
 
-    bool isPosOkay(const pair<int, int>& pos);
+    bool isRealPos(const pair<int, int>& pos) const;
+
+    bool isPosOkay(const pair<int, int>& pos) const;
 
     void initRoomNodes();
 
@@ -35,9 +38,9 @@ class Room{
 
     void makeRoomEdges();
 
-    PathInfo dfsMaxPaint(pair<int, int>, Matrix<int>&, char);
+    PathInfo dfsMaxPaint(pair<int, int>, Matrix<int>&, char) const;
 
-    void animate(string);
+    void animate(string) const;
 
 public:
 
@@ -51,11 +54,11 @@ public:
 
     void printPathTree(const char file[]) const;
 
-    void printChosenPath(int idx);
+    void printChosenPath(int idx) const;
 
     void twoDronesMostPaint() const;
 
-    void maxPaint();
+    void maxPaint() const;
     
 };
 

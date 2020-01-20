@@ -1,13 +1,18 @@
 #include "Room.h"
 
-bool Room::isPosOkay(const pair<int, int>& pos){
-    return pos.first >= 0 && pos.first < m && pos.second >=0 && pos.second < n && !blocked[pos.first][pos.second];
+bool Room::isRealPos(const pair<int, int>& pos) const{
+    return pos.first >= 0 && pos.first < m && pos.second >= 0 && pos.second < n;
+}
+
+bool Room::isPosOkay(const pair<int, int>& pos) const{
+    return isRealPos(pos) && !blocked[pos];
 }
 
 void Room::initRoomNodes(){
     roomNodes.build(m, n);
     for(int i = 0; i < m; i ++){
         for(int j = 0; j < n; j ++){
+            //'X' is a character without a meaning
             roomNodes[i][j] = new node('X', {i, j});
         }
     }
@@ -23,6 +28,8 @@ void Room::clearRoomNodes(){
 
 
 void Room::makeRoomEdges(){
+
+    //start a bfs from jerry (destination)
     Matrix<int> used(m, n, -1);
     queue<node* > q;
     q.push(roomNodes[jerry]);
@@ -33,15 +40,20 @@ void Room::makeRoomEdges(){
         if(canPaint[w->pos]){
             w->symbol = 'P';
         }
-
+        
+        //going through adjacent position (neighbours)
         for(int i = 0; i < adjacentPosition.size(); i ++){
+
             pair<int, int> nb_pos = {w->pos.first + adjacentPosition[i].first, w->pos.second + adjacentPosition[i].second};
+
             if(isPosOkay(nb_pos)){
                 node* nb = roomNodes[nb_pos];
                 if(used[nb_pos] == used[w->pos] - 1){
+                    //then nb is from the previous level, so w->nb should exist in the graph
                     w->addNext(nb);
                 }
                 else if(used[nb_pos] == -1){
+                    //then the nb vertex is not yet visited, and we should add it to the queue and mark it as visited
                     used[nb_pos] = used[w->pos] + 1;
                     q.push(nb);
                 }
@@ -66,23 +78,32 @@ void Room::read(const char file[256]){
 
     in >> m >> n;
 
+    assert(m >= 0 && n >= 0 && "Sizes of the room are with negative sign");
+
     blocked.build(m, n, 0);
     canPaint.build(m, n, 0);      
 
     in >> jerry.first >> jerry.second;
     in >> tom.first >> tom.second;
 
+    assert(isRealPos(jerry) && "Jerry's position is invalid");
+    assert(isRealPos(tom) && "Tom's position is invalid");
+
     int k, l;
     in >> k >> l;
+
+    assert(k >= 0 && "Number of objects is negative");
+    assert(l >= 0 && "Number of available positions for painting is negative");
     
     while(k--){
         int x, y;
         in >> x >> y;
+        assert(isRealPos({x,y}) && "Object has an invalid starting position");
         string line;
         getline(in, line);
         getline(in, line);
         while(line != "==="){
-                
+            assert(isRealPos({x, y + line.size() - 1}) && "Object is placed outside of the room");
             for(int i = 0; i < line.size(); i ++){
                 if(line[i] == '1'){
                     blocked[x][y + i] = true;
@@ -96,6 +117,7 @@ void Room::read(const char file[256]){
     for(int i = 0; i < l; i ++){
         int x, y;
         in >> x >> y;
+        assert(isRealPos({x, y}) && "Available position for painting is out of bounds");
         canPaint[x][y] = true;
     }
     in.close();
@@ -116,7 +138,7 @@ void Room::printPathTree(const char file[]) const{
     out.close();
 }
 
-void Room::printChosenPath(int idx){
+void Room::printChosenPath(int idx) const{
     PathInfo pathInfo = pathsTree.findChosenPath(idx, 'T');
     animate(pathInfo.path);
     std::cout << "=========\nINFO FOR PATH NUMBER " << idx << ":\n";
@@ -168,9 +190,10 @@ void Room::twoDronesMostPaint() const{
     std::cout << "\n";
 }
 
-PathInfo Room::dfsMaxPaint(pair<int, int> cur, Matrix<int>& used, char prSymbol){
+PathInfo Room::dfsMaxPaint(pair<int, int> cur, Matrix<int>& used, char prSymbol) const{
     
     if(cur == jerry){
+        //then we arrived at destination and should terminate and return an empty path
         return PathInfo();
     }
     PathInfo res;
@@ -182,13 +205,18 @@ PathInfo Room::dfsMaxPaint(pair<int, int> cur, Matrix<int>& used, char prSymbol)
         nb.second = cur.second + adjacentPosition[i].second;
         if(isPosOkay(nb) && !used[nb]){
             used[nb] = 1;
+            //so that we don't visit it again
             PathInfo path = dfsMaxPaint(nb, used, symbolFor(cur, nb));
             used[nb] = 0;
+            //so that we can visit it again
             if(path.pathLen >= 0){
+                //then we have found a path to destination
                 path.turns += isTurn(prSymbol, symbolFor(cur, nb));
+                //did we make a turn?
                 path.pathLen++;
                 path.path = symbolFor(cur, nb) + path.path;
                 if((path.painted == res.painted && path.turns < res.turns) || path.painted > res.painted){
+                    //then this path is the best we have yet found
                     res = path;
                 }
             }
@@ -203,7 +231,7 @@ PathInfo Room::dfsMaxPaint(pair<int, int> cur, Matrix<int>& used, char prSymbol)
     
 }
 
-void Room::maxPaint(){
+void Room::maxPaint() const{
     Matrix<int> used(m, n, 0);
     used[tom] = 1;
     PathInfo p = dfsMaxPaint(tom, used, 'X');
@@ -230,50 +258,54 @@ void ClearScreen()
 }
 
 
-void Room::animate(string dronePath){
+void Room::animate(string dronePath) const{
     pair<int, int> drone = tom;
+    std::cout << "okay\n";
+    //a matrix for the positions in the room
     Matrix<char> painted(m, n, '.');
+    //matrices for the transition between the positions in the room
+    Matrix<char> directionsHor(m, n, ' ');
+    Matrix<char> directionsVer(m, n, ' ');
+    std::cout << "okay\n";
     for(int x = 0; x < dronePath.size(); x ++){
         if(dronePath[x] == 'P'){
             painted[drone] = 'P';
-        } else if(dronePath[x] == 'S'){
-            if(painted[drone] != 'P')
-                painted[drone] = '|';
+        }
+        if(dronePath[x] == 'S'){
+            directionsVer[drone] = '|';
             drone.first ++;
-        } else if(dronePath[x] == 'N'){
-            if(painted[drone] != 'P')
-                painted[drone] = '|';
+        }
+        if(dronePath[x] == 'N'){
             drone.first --;
-        } else if(dronePath[x] == 'E'){
-            if(painted[drone] != 'P')
-                painted[drone] = '-';
+            directionsVer[drone] = '|';
+        }
+        if(dronePath[x] == 'E'){
+            directionsHor[drone] = '-';
             drone.second ++;
-        } else if(dronePath[x] == 'W'){
-            if(painted[drone] != 'P')
-                painted[drone] = '-';
+        }
+        if(dronePath[x] == 'W'){
             drone.second --;
+            directionsHor[drone] = '-';
         }
         ClearScreen();
         for(int i = 0; i < m; i ++){
             for(int j = 0; j < n; j ++){
                 pair<int, int> cur({i, j});
-                if(cur == drone){
+                if(cur == drone)
                     std::cout << '*';
-                    continue;
-                }
-                if(cur == tom){
+                else if(cur == tom)
                     std::cout << 'T';
-                    continue;
-                }
-                if(cur == jerry){
+                else if(cur == jerry)
                     std::cout << 'J';
-                    continue;
-                }
-                if(blocked[i][j]){
+                else if(blocked[i][j])
                     std::cout << 'B';
-                    continue;
-                }
-                std::cout << painted[i][j];
+                else
+                    std::cout << painted[i][j];
+                std::cout << directionsHor[i][j];
+            }
+            std::cout << "\n";
+            for(int j = 0; j < n; j ++){
+                std::cout << directionsVer[i][j] << " ";
             }
             std::cout << "\n";
         }
