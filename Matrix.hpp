@@ -31,13 +31,13 @@ const std::vector<T>& Matrix<T>::operator[](const int& idx) const{
 }
 
 template <class T>
-T& Matrix<T>::operator[](const pair<int, int>& idx){
+T& Matrix<T>::operator[](const std::pair<int, int>& idx){
     assert(idx.first >= 0 && idx.first < matrix.size() && idx.second >= 0 && idx.second < matrix[idx.first].size());
     return matrix[idx.first][idx.second];
 }
 
 template <class T>
-const T& Matrix<T>::operator[](const pair<int, int>& idx) const{
+const T& Matrix<T>::operator[](const std::pair<int, int>& idx) const{
     assert(idx.first >= 0 && idx.first < matrix.size() && idx.second >= 0 && idx.second < matrix[idx.first].size());
     return matrix[idx.first][idx.second];
 }

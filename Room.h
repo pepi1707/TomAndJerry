@@ -17,20 +17,20 @@
 class Room{
 
     int n, m;
-    pair<int, int> jerry;
-    pair<int, int> tom;
+    std::pair<int, int> jerry;
+    std::pair<int, int> tom;
 
     Matrix<int> blocked;
     Matrix<int> canPaint;
     Matrix<node*> roomNodes;
 
-    std::vector<pair<int, int>> adjacentPosition = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+    std::vector<std::pair<int, int>> adjacentPosition = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
     PathsTree pathsTree;
 
-    bool isRealPos(const pair<int, int>& pos) const;
+    bool isRealPos(const std::pair<int, int>& pos) const;
 
-    bool isPosOkay(const pair<int, int>& pos) const;
+    bool isPosOkay(const std::pair<int, int>& pos) const;
 
     void initRoomNodes();
 
@@ -38,7 +38,7 @@ class Room{
 
     void makeRoomEdges();
 
-    PathInfo dfsMaxPaint(pair<int, int>, Matrix<int>&, char) const;
+    PathInfo dfsMaxPaint(std::pair<int, int>, Matrix<int>&, char) const;
 
     void animate(string) const;
 

@@ -17,7 +17,7 @@ void PathsTree::clearTreeNodes(const node* cur) const{
     delete cur;
 }
 
-void PathsTree::dfsBuild(node* curPathNode, const node* curRoomNode, const pair<int, int>& jerry) const{
+void PathsTree::dfsBuild(node* curPathNode, const node* curRoomNode, const std::pair<int, int>& jerry) const{
     if(curRoomNode->symbol == 'P' && curPathNode->symbol != 'P'){
         //then we should make a paint command but we shouldn't get stuck in an infinite loop and only make one paint node
         node* toPaint = new node('P', curPathNode->pos);
@@ -73,34 +73,74 @@ PathInfo PathsTree::dfsFindChosenPath(const node* cur, int idx, const char& prev
 
         return curPath;
     }
-    //then we have arrived at a leave
+    //then we have arrived at a leaf
     return PathInfo();
 }
 
-PathInfo PathsTree::dfsCommonPath(const node* cur, int idx1, int idx2, const char& prevSymbol) const{
+PathInfo PathsTree::dfsFindPathWithoutRepetition(const node* cur1, const node* cur2, int idx1, int idx2, const char& prevSymbol) const{
 
-    for(int i = 0; i < cur->next.size(); i ++){
-        if(idx2 >= cur->next[i]->cntLeaves){
-            idx1 -= cur->next[i]->cntLeaves;
-            idx2 -= cur->next[i]->cntLeaves;
-            continue;
+    const node *next1 = nullptr, *next2 = nullptr;
+    int idx1c = idx1, idx2c = idx2;
+    //find next for the first path
+    for(int i = 0; i < cur1->next.size(); i ++){
+        if(idx1c >= cur1->next[i]->cntLeaves){
+            idx1c -= cur1->next[i]->cntLeaves;
         }
-        if(idx1 < 0){
-            return PathInfo();
+        else{
+            next1 = cur1->next[i];
+            break;
         }
-        node* nb = cur->next[i];
-        PathInfo curPath, restPath = dfsCommonPath(nb, idx1, idx2, nb->symbol == 'P' ? cur->symbol : nb->symbol);
-        curPath.path = nb->symbol + restPath.path;
-        curPath.turns = isTurn(prevSymbol, nb->symbol) + restPath.turns;
-        curPath.pathLen = (nb->symbol != 'P') + restPath.pathLen;
-        curPath.painted = (nb->symbol == 'P') + restPath.painted;
-
-        return curPath;
     }
-    return PathInfo();
+    if(!next1){
+        //then they will no longer intercept and we should find the rest of the second path
+        return dfsFindChosenPath(cur2, idx2, prevSymbol);
+    }
+    
+    //find next for the second path
+    for(int i = 0; i < cur2->next.size(); i ++){
+        if(idx2c >= cur2->next[i]->cntLeaves){
+            idx2c -= cur2->next[i]->cntLeaves;
+        }
+        else{
+            next2 = cur2->next[i];
+            break;
+        }
+    }
+    if(!next2){
+        //then the second path has come to an end
+        return PathInfo();
+    }
+    PathInfo res;
+    if(next1->pos == next2->pos && next1->symbol == 'P' && next2->symbol == 'P'){
+        //then the second drone mustn't paint in this position
+        //next 1 and 2
+        return dfsFindPathWithoutRepetition(next1, next2, idx1c, idx2c, cur2->symbol);
+    }
+    else if(next1->symbol == 'P'){
+        //because they don't intersect for now
+        //next 1
+        return dfsFindPathWithoutRepetition(next1, cur2, idx1c, idx2, prevSymbol);
+    }
+    else if(next2->symbol == 'P'){
+        //they don't interesect
+        //next 2
+        res = dfsFindPathWithoutRepetition(cur1, next2, idx1, idx2c, cur2->symbol);
+    }
+    else{
+        //they can both move since they don't intersect or the intersection is not a paint node
+        //next 1 and 2
+        res = dfsFindPathWithoutRepetition(next1, next2, idx1c, idx2c, next2->symbol);
+    }
+    //standard operations
+    res.turns = isTurn(prevSymbol, next2->symbol) + res.turns;
+    res.path = next2->symbol + res.path;
+    res.pathLen = (next2->symbol != 'P') + res.pathLen;
+    res.painted = (next2->symbol == 'P') + res.painted;
+    return res;
+    
 }
 
-void PathsTree::build(const node* tom, const pair<int,int>& jerry){
+void PathsTree::build(const node* tom, const std::pair<int,int>& jerry){
     root = new node('T', tom->pos);
     dfsBuild(root, tom, jerry);
 }
@@ -109,19 +149,19 @@ void PathsTree::print(ofstream& out, int idx) const{
     dfsPrint(root, out, idx);
 }
 
-PathInfo PathsTree::findChosenPath(int idx, const char& prevSymbol) const{
-    return dfsFindChosenPath(root, idx, prevSymbol);
+PathInfo PathsTree::findChosenPath(int idx) const{
+    return dfsFindChosenPath(root, idx, 'T');
 }
 
-PathInfo PathsTree::commonPath(int idx1, int idx2, const char& prevSymbol) const{
-    return dfsCommonPath(root, idx1, idx2, prevSymbol);
+PathInfo PathsTree::findPathWithoutRepetition(int idx1, int idx2) const{
+    return dfsFindPathWithoutRepetition(root, root, idx1, idx2, 'T');
 }
 
 int PathsTree::numberOfLeaves() const{
     return root->cntLeaves;
 }
 
-char symbolFor(pair<int, int> from, pair<int, int> to){
+char symbolFor(const std::pair<int, int>& from, const std::pair<int, int>& to){
     if(from.first == to.first){
         if(from.second < to.second){
             return 'E';

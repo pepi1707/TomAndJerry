@@ -20,9 +20,9 @@ public:
 
     const std::vector<T>& operator[](const int& idx) const;
 
-    T& operator[](const pair<int, int>& idx);
+    T& operator[](const std::pair<int, int>& idx);
 
-    const T& operator[](const pair<int, int>& idx) const;
+    const T& operator[](const std::pair<int, int>& idx) const;
 
     void build(const int& m, const int& n);
 

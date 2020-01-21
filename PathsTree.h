@@ -11,13 +11,13 @@ class PathsTree{
 
     void clearTreeNodes(const node* cur) const;
 
-    void dfsBuild(node* curPathNode, const node* curRoomNode, const pair<int,int>& jerry) const;
+    void dfsBuild(node* curPathNode, const node* curRoomNode, const std::pair<int,int>& jerry) const;
 
     void dfsPrint(const node* cur, ofstream& out, int idx) const;
 
     PathInfo dfsFindChosenPath(const node* cur, int idx, const char& prevSymbol) const;
 
-    PathInfo dfsCommonPath(const node* cur, int idx1, int idx2, const char& prevSymbol) const;
+    PathInfo dfsFindPathWithoutRepetition(const node* cur1, const node* cur2, int idx1, int idx2, const char& prevSymbol) const;
 
 public:
 
@@ -25,13 +25,13 @@ public:
 
     ~PathsTree();
 
-    void build(const node* tom, const pair<int, int>& jerry);
+    void build(const node* tom, const std::pair<int, int>& jerry);
 
     void print(ofstream& out, int idx) const;
 
-    PathInfo findChosenPath(int idx, const char& prevSymbol) const;
+    PathInfo findChosenPath(int idx) const;
 
-    PathInfo commonPath(int idx1, int idx2, const char& prevSymbol) const;
+    PathInfo findPathWithoutRepetition(int idx1, int idx2) const;
 
     int numberOfLeaves() const;
 
@@ -39,7 +39,7 @@ public:
 };
 
 
-char symbolFor(pair<int, int> from, pair<int, int> to);
+char symbolFor(const std::pair<int, int>& from, const std::pair<int, int>& to);
 
 bool isTurn(const char& c1, const char& c2);
 

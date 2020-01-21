@@ -3,20 +3,18 @@
 
 #include <vector>
 
-using namespace std;
-
 struct node{
 
     char symbol;
-    pair<int, int> pos;
-    vector<node*> next;
+    std::pair<int, int> pos;
+    std::vector<node*> next;
     int cntLeaves;
 
     node(){
         cntLeaves = 0;
     }
 
-    node(const char _symbol, const pair<int, int> _pos){
+    node(const char _symbol, const std::pair<int, int> _pos){
         symbol = _symbol;
         pos = _pos;
         cntLeaves = 0;

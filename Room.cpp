@@ -1,10 +1,10 @@
 #include "Room.h"
 
-bool Room::isRealPos(const pair<int, int>& pos) const{
+bool Room::isRealPos(const std::pair<int, int>& pos) const{
     return pos.first >= 0 && pos.first < m && pos.second >= 0 && pos.second < n;
 }
 
-bool Room::isPosOkay(const pair<int, int>& pos) const{
+bool Room::isPosOkay(const std::pair<int, int>& pos) const{
     return isRealPos(pos) && !blocked[pos];
 }
 
@@ -44,7 +44,7 @@ void Room::makeRoomEdges(){
         //going through adjacent position (neighbours)
         for(int i = 0; i < adjacentPosition.size(); i ++){
 
-            pair<int, int> nb_pos = {w->pos.first + adjacentPosition[i].first, w->pos.second + adjacentPosition[i].second};
+            std::pair<int, int> nb_pos = {w->pos.first + adjacentPosition[i].first, w->pos.second + adjacentPosition[i].second};
 
             if(isPosOkay(nb_pos)){
                 node* nb = roomNodes[nb_pos];
@@ -139,7 +139,7 @@ void Room::printPathTree(const char file[]) const{
 }
 
 void Room::printChosenPath(int idx) const{
-    PathInfo pathInfo = pathsTree.findChosenPath(idx, 'T');
+    PathInfo pathInfo = pathsTree.findChosenPath(idx);
     animate(pathInfo.path);
     std::cout << "=========\nINFO FOR PATH NUMBER " << idx << ":\n";
     std::cout << "commands: " << pathInfo.path << "\n";
@@ -153,19 +153,18 @@ void Room::twoDronesMostPaint() const{
     int leaves = pathsTree.numberOfLeaves();
     int maxPaint = -1;
     int minTurns = m * n;
-    std::vector<PathInfo> ans(3);
+    std::pair<PathInfo, PathInfo> ans;
 
     for(int i = 0; i < leaves; i ++){
-        PathInfo path1 = pathsTree.findChosenPath(i, 'T');
+        PathInfo path1 = pathsTree.findChosenPath(i);
         for(int j = i + 1; j < leaves; j ++){
-            PathInfo path2 = pathsTree.findChosenPath(j, 'T');
-            PathInfo path3 = pathsTree.commonPath(i, j, 'T');
-            int curPaint = path1.painted + path2.painted - path3.painted;
+            PathInfo path2 = pathsTree.findPathWithoutRepetition(i, j);
+            int curPaint = path1.painted + path2.painted;
             int curTurns = path1.turns + path2.turns;
             if((curPaint == maxPaint && curTurns < minTurns) || curPaint > maxPaint){
                 maxPaint = curPaint;
                 minTurns = curTurns;
-                ans = {path1, path2, path3};
+                ans = {path1, path2};
             }
 
         }
@@ -175,22 +174,11 @@ void Room::twoDronesMostPaint() const{
     std::cout << maxPaint << " blocks\n";
     std::cout << "with the minimum of " << minTurns << " turns amongst all\n";
     std::cout << "Drone commands:\n";
-    std::cout << "First drone: " << ans[0].path << "\n";
-    std::cout << "Second drone: ";
-    int i;
-    for(i = 0; i < ans[2].path.size(); i++){
-        if(ans[1].path[i] == 'P'){
-            continue;
-        }
-        std::cout << ans[1].path[i];
-    }
-    for(; i < ans[1].path.size(); i ++){
-        std::cout << ans[1].path[i];
-    }
-    std::cout << "\n";
+    std::cout << "First drone: " << ans.first.path << "\n";
+    std::cout << "Second drone: " << ans.second.path << "\n";
 }
 
-PathInfo Room::dfsMaxPaint(pair<int, int> cur, Matrix<int>& used, char prSymbol) const{
+PathInfo Room::dfsMaxPaint(std::pair<int, int> cur, Matrix<int>& used, char prSymbol) const{
     
     if(cur == jerry){
         //then we arrived at destination and should terminate and return an empty path
@@ -199,7 +187,7 @@ PathInfo Room::dfsMaxPaint(pair<int, int> cur, Matrix<int>& used, char prSymbol)
     PathInfo res;
     res.painted = - m * n;
     res.pathLen = - m * n;
-    pair<int, int> nb;
+    std::pair<int, int> nb;
     for(int i = 0; i < adjacentPosition.size(); i ++){
         nb.first = cur.first + adjacentPosition[i].first;
         nb.second = cur.second + adjacentPosition[i].second;
@@ -259,7 +247,7 @@ void ClearScreen()
 
 
 void Room::animate(string dronePath) const{
-    pair<int, int> drone = tom;
+    std::pair<int, int> drone = tom;
     std::cout << "okay\n";
     //a matrix for the positions in the room
     Matrix<char> painted(m, n, '.');
@@ -290,7 +278,7 @@ void Room::animate(string dronePath) const{
         ClearScreen();
         for(int i = 0; i < m; i ++){
             for(int j = 0; j < n; j ++){
-                pair<int, int> cur({i, j});
+                std::pair<int, int> cur({i, j});
                 if(cur == drone)
                     std::cout << '*';
                 else if(cur == tom)

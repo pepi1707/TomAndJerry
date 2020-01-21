@@ -19,11 +19,9 @@
 int main(){
 
     Room room;
-    char txt[] = "bigger-room.txt";
-    room.read(txt);
+    room.read("bigger-room.txt");
     room.buildPathTree();
-    char output[] = "bigGraph.dot";
-    room.printPathTree(output);
+    room.printPathTree("bigGraph.dot");
     room.printChosenPath(1);
     room.printChosenPath(12);
     room.printChosenPath(18);
